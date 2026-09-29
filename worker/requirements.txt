@@ -1,11 +1,11 @@
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic==2.13.1
-pydantic-settings==2.7.0
+fastapi==0.141.1
+uvicorn[standard]==0.54.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
 playwright==1.62.0
 httpx==0.28.1
 PyJWT==2.15.1
 cryptography==50.0.1
 google-cloud-firestore==2.32.0
 structlog==24.4.0
-google-genai==2.23.0
+google-genai==2.25.0

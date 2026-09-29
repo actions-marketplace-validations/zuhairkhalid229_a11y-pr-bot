@@ -22,6 +22,11 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # playwright must move in lockstep with the base image tag in
+      # worker/Dockerfile, which dependabot cannot edit. A bump here alone
+      # fails the container at start-up, so upgrade both by hand.
+      # tests/test_pins.py enforces the pairing.
+      - dependency-name: "playwright"
 
   - package-ecosystem: npm
     directory: "/web"
