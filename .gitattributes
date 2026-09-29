@@ -1,0 +1,14 @@
+# Normalise to LF in the repository; check out native on Windows.
+* text=auto eol=lf
+
+# Shell scripts must stay LF even on Windows or they will not run.
+*.sh text eol=lf
+
+# Vendored third-party code: never touch it, and keep it out of diffs.
+worker/vendor/axe.min.js -text linguist-vendored
+web/package-lock.json -diff linguist-generated
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

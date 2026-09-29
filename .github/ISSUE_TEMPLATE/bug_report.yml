@@ -1,0 +1,55 @@
+name: Bug report
+description: Something the bot did wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. If the bot posted a **wrong suggestion** — a fix that
+        was incorrect, broke the build, or landed on the wrong line — please say so
+        up front. That is the failure mode we care most about and it gets priority.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: A link to the PR or check run is worth a thousand words, if it is public.
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations: { required: true }
+  - type: textarea
+    id: rendered
+    attributes:
+      label: Rendered HTML of the element
+      description: From the check run or the PR comment. This plus the JSX below lets us add a regression case.
+      render: html
+  - type: textarea
+    id: jsx
+    attributes:
+      label: The JSX that produced it
+      render: tsx
+  - type: input
+    id: rule
+    attributes:
+      label: axe rule id
+      placeholder: image-alt
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it go wrong
+      options:
+        - It posted a wrong suggestion
+        - It commented on the wrong line
+        - It missed an issue that is really there
+        - It reported an issue that is not real
+        - The scan never ran
+        - The dashboard
+        - Something else
+    validations: { required: true }
+  - type: input
+    id: provider
+    attributes:
+      label: Preview deployment provider
+      placeholder: Vercel / Netlify / Cloudflare Pages / other

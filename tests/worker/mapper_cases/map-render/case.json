@@ -1,0 +1,43 @@
+{
+  "diff": {
+    "src/Footer/SocialLinks.tsx": "all"
+  },
+  "finding": {
+    "rule_id": "link-name",
+    "impact": "serious",
+    "wcag": [
+      {
+        "id": "2.4.4",
+        "name": "Link Purpose (In Context)",
+        "level": "A",
+        "introduced_in": "2.0"
+      }
+    ],
+    "help": "Links must have discernible text",
+    "failure_summary": "Fix all of the following:\n  Element does not have text that is visible to screen readers",
+    "html": "<a href=\"https://github.com/acme\" target=\"_blank\" rel=\"noreferrer\"><svg></svg></a>",
+    "selector": "ul.social-links > li:nth-child(2) > a",
+    "en_301_549": [
+      "9.1.1.1"
+    ],
+    "page_url": "https://p.vercel.app/",
+    "page_path": "/",
+    "help_url": "https://dequeuniversity.com/rules/axe/4.13/x"
+  },
+  "siblings": [
+    "<a href=\"https://twitter.com/acme\" target=\"_blank\" rel=\"noreferrer\"><svg></svg></a>",
+    "<a href=\"https://linkedin.com/company/acme\" target=\"_blank\" rel=\"noreferrer\"><svg></svg></a>"
+  ],
+  "expected": {
+    "file": "src/Footer/SocialLinks.tsx",
+    "line_contains": "<a href={href}",
+    "disposition_in": [
+      "annotation"
+    ],
+    "never": [
+      "suggestion"
+    ],
+    "duplicates": 2
+  },
+  "notes": "href literal hits the data array, not the JSX. Three <a> from one .map() must collapse to ONE comment, and it must not be one-click: a literal aria-label would be wrong for two of the three."
+}

@@ -1,0 +1,57 @@
+[project]
+name = "a11y-pr-bot"
+version = "0.6.0"
+description = "WCAG 2.2 and EN 301 549 checks on every pull request, with one-click fixes for your JSX."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Zuhair Khalid", email = "zuhairkhalid229@gmail.com" }]
+keywords = ["accessibility", "a11y", "wcag", "en-301-549", "github-app", "axe-core"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["worker/vendor", "web", ".venv"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W",   # pycodestyle
+  "F",        # pyflakes
+  "I",        # import sorting
+  "UP",       # pyupgrade
+  "B",        # bugbear
+  "C4",       # comprehensions
+  "SIM",      # simplify
+  "RUF",      # ruff-specific
+]
+ignore = [
+  "E501",    # line length is handled by the formatter, not the linter
+  "B008",    # FastAPI's Depends() in defaults is the documented idiom
+  "SIM105",  # contextlib.suppress is not clearer than a two-line try/except here
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests deliberately unpack tuples they only partly assert on, use short names
+# in comprehensions, and build fixtures inline. Linting app/ and worker/ is
+# where the signal is.
+"tests/**" = ["B011", "RUF001", "RUF059", "E741", "UP031", "E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+  "browser: needs a locally installed Chromium (playwright install chromium)",
+]

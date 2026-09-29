@@ -1,0 +1,41 @@
+{
+  "diff": {
+    "src/Card.tsx": [
+      8,
+      8
+    ]
+  },
+  "finding": {
+    "rule_id": "image-alt",
+    "impact": "critical",
+    "wcag": [
+      {
+        "id": "1.1.1",
+        "name": "Non-text Content",
+        "level": "A",
+        "introduced_in": "2.0"
+      }
+    ],
+    "help": "Images must have alternative text",
+    "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute",
+    "html": "<img src=\"/cards/widget.png\" class=\"card-img\">",
+    "selector": "article.card > img",
+    "en_301_549": [
+      "9.1.1.1"
+    ],
+    "page_url": "https://p.vercel.app/",
+    "page_path": "/",
+    "help_url": "https://dequeuniversity.com/rules/axe/4.13/x"
+  },
+  "expected": {
+    "file": "src/Card.tsx",
+    "line_contains": "card-img",
+    "disposition_in": [
+      "annotation"
+    ],
+    "never": [
+      "suggestion"
+    ]
+  },
+  "notes": "The img line was not touched by this PR. GitHub would 422 a suggestion there; we must not try."
+}

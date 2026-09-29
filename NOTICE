@@ -1,0 +1,60 @@
+a11y-pr-bot
+Copyright 2026 Zuhair Khalid and the a11y-pr-bot contributors
+
+This product includes software developed by third parties, listed below.
+The project's own source code is licensed under the Apache License 2.0; see
+LICENSE. Third-party components keep their own licenses, which are not
+superseded by ours.
+
+================================================================================
+axe-core — Mozilla Public License 2.0
+================================================================================
+
+Files:      worker/vendor/axe.min.js
+Version:    4.13.0  (see worker/vendor/axe.json for the pinned sha256)
+Copyright:  Copyright (c) 2015-2026 Deque Systems, Inc.
+License:    Mozilla Public License 2.0 — full text in worker/vendor/LICENSE-axe-core
+Source:     https://github.com/dequelabs/axe-core
+Obtained:   https://registry.npmjs.org/axe-core/-/axe-core-4.13.0.tgz
+            via scripts/vendor_axe.sh, which records the sha256 that
+            worker/axe.py verifies at import.
+
+The MPL 2.0 is a file-level copyleft licence. What that means here:
+
+  * axe.min.js is redistributed VERBATIM. We do not patch, minify, re-bundle
+    or otherwise modify it. If that ever changes, the modified file must stay
+    under the MPL and the changes must be published.
+  * The MPL's obligations attach to that file only. They do not extend to the
+    rest of this repository, which the MPL calls a "Larger Work" and
+    explicitly permits under a different licence (MPL 2.0 §3.3).
+  * The corresponding source is the upstream repository linked above, at the
+    pinned version.
+
+To upgrade it, run `bash scripts/vendor_axe.sh <version>` — which re-downloads
+the tarball, refreshes this file's LICENSE copy and the recorded digest — then
+re-run the test suite, because axe rule ids and tags move between releases and
+finding fingerprints depend on them.
+
+================================================================================
+Runtime dependencies
+================================================================================
+
+Installed from PyPI and npm at build time, not vendored in this repository.
+Their licences apply to your deployment; none are copyleft.
+
+  Python
+    fastapi, starlette, pydantic, pydantic-settings  MIT
+    uvicorn, httpx, structlog                        BSD-3-Clause / MIT
+    playwright                                       Apache-2.0
+    PyJWT                                            MIT
+    cryptography                                     Apache-2.0 OR BSD-3-Clause
+    google-cloud-firestore, google-cloud-tasks       Apache-2.0
+    google-genai, firebase-admin                     Apache-2.0
+
+  JavaScript (web/)
+    next, react, react-dom                           MIT
+    firebase                                         Apache-2.0
+    typescript                                       Apache-2.0
+
+Run `pip-licenses` or `npx license-checker` for the authoritative list at any
+given commit.

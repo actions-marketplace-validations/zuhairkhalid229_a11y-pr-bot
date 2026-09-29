@@ -1,0 +1,38 @@
+{
+  "diff": {
+    "src/Toolbar.tsx": "all"
+  },
+  "finding": {
+    "rule_id": "button-name",
+    "impact": "critical",
+    "wcag": [
+      {
+        "id": "4.1.2",
+        "name": "Name, Role, Value",
+        "level": "A",
+        "introduced_in": "2.0"
+      }
+    ],
+    "help": "Buttons must have discernible text",
+    "failure_summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty",
+    "html": "<button data-testid=\"fmt-italic\" class=\"icon-btn\"><svg></svg></button>",
+    "selector": "div.toolbar > button:nth-child(2)",
+    "en_301_549": [
+      "9.1.1.1"
+    ],
+    "page_url": "https://p.vercel.app/",
+    "page_path": "/",
+    "help_url": "https://dequeuniversity.com/rules/axe/4.13/x"
+  },
+  "expected": {
+    "file": "src/Toolbar.tsx",
+    "line_contains": "fmt-italic",
+    "line_not_contains": "fmt-bold",
+    "disposition_in": [
+      "suggestion",
+      "annotation"
+    ],
+    "patch_contains": "label="
+  },
+  "notes": "The bold one already passes a label; the fix is the same prop on the italic one."
+}

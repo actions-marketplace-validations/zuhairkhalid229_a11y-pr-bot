@@ -1,0 +1,20 @@
+# gcloud builds submit --config worker/cloudbuild.yaml .
+# (gcloud run deploy --source cannot pick a non-root Dockerfile.)
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - worker/Dockerfile
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/a11y/worker:${SHORT_SHA}
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/a11y/worker:latest
+      - .
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/a11y/worker:${SHORT_SHA}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/a11y/worker:latest
+substitutions:
+  _REGION: europe-west1
+options:
+  logging: CLOUD_LOGGING_ONLY

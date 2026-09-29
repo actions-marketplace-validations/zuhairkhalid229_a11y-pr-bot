@@ -1,0 +1,154 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  python:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            worker/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt -r worker/requirements.txt
+
+      - name: Check for dependency conflicts
+        run: pip check
+
+      # Only Chromium, and only its own deps -- the full `playwright install`
+      # pulls every browser and roughly triples the job time.
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('worker/requirements.txt') }}
+
+      - name: Install Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Verify the vendored axe-core digest
+        run: python -c "from worker.axe import load_axe; print('axe', load_axe()[1])"
+
+      - name: Run tests
+        run: pytest -q --junit-xml=pytest.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-${{ matrix.python }}
+          path: pytest.xml
+          if-no-files-found: ignore
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install ruff==0.14.2
+      - run: ruff check .
+      - run: ruff format --check .
+
+  web:
+    name: Dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          # Placeholders: the build must not require real project credentials.
+          NEXT_PUBLIC_FIREBASE_API_KEY: ci
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci
+          NEXT_PUBLIC_API_BASE_URL: https://example.invalid
+          NEXT_PUBLIC_APP_SLUG: a11y-pr-bot
+
+  docker:
+    name: Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+
+      # Both images are built from the repo root: the worker needs app/ too.
+      - name: Build api image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: a11y-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: worker/Dockerfile
+          push: false
+          load: true
+          tags: a11y-worker:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # A Playwright base-image tag that disagrees with the pinned playwright
+      # package fails at container start, not at build -- so check it here.
+      - name: Smoke-test the images
+        run: |
+          docker run --rm a11y-api:ci pip check
+          docker run --rm a11y-worker:ci pip check
+          docker run --rm a11y-worker:ci python -c "
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              b = p.chromium.launch(); print('chromium', b.version); b.close()"
+          docker run --rm a11y-worker:ci python -c "
+          from worker.axe import load_axe; print('axe', load_axe()[1])"

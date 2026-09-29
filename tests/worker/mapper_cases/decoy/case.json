@@ -1,0 +1,37 @@
+{
+  "diff": {
+    "src/Gallery.tsx": "all"
+  },
+  "finding": {
+    "rule_id": "image-alt",
+    "impact": "critical",
+    "wcag": [
+      {
+        "id": "1.1.1",
+        "name": "Non-text Content",
+        "level": "A",
+        "introduced_in": "2.0"
+      }
+    ],
+    "help": "Images must have alternative text",
+    "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute",
+    "html": "<img src=\"/photos/forest.jpg\">",
+    "selector": "div.gallery > img:nth-child(2)",
+    "en_301_549": [
+      "9.1.1.1"
+    ],
+    "page_url": "https://p.vercel.app/",
+    "page_path": "/",
+    "help_url": "https://dequeuniversity.com/rules/axe/4.13/x"
+  },
+  "expected": {
+    "file": "src/Gallery.tsx",
+    "line_contains": "forest.jpg",
+    "line_not_contains": "beach",
+    "disposition_in": [
+      "suggestion",
+      "annotation"
+    ]
+  },
+  "notes": "Picking the beach line would produce a patch that changes nothing wrong."
+}

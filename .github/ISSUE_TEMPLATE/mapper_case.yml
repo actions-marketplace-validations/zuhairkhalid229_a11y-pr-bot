@@ -1,0 +1,34 @@
+name: Source-mapper case
+description: The bot could not find (or mis-found) the source of a real violation
+labels: ["mapper", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These are the most useful reports we get. Each one becomes a directory in
+        `tests/worker/mapper_cases/` and is measured forever after by
+        `scripts/eval_mapper.py`. You do not need to supply a fix.
+  - type: textarea
+    id: rendered
+    attributes:
+      label: Rendered element
+      render: html
+    validations: { required: true }
+  - type: textarea
+    id: source
+    attributes:
+      label: The source that produced it
+      description: Include a few lines either side, and the file path.
+      render: tsx
+    validations: { required: true }
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What the bot did
+      description: Dropped it? Pointed at the wrong line? Wrote a patch that was wrong?
+    validations: { required: true }
+  - type: input
+    id: pattern
+    attributes:
+      label: What makes this case hard
+      placeholder: "e.g. CSS-in-JS hashed classes, i18n text, rendered inside a .map(), wrapper component"

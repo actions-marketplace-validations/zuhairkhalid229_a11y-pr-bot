@@ -1,0 +1,37 @@
+{
+  "diff": {
+    "src/checkout/SubmitButton.tsx": "all"
+  },
+  "finding": {
+    "rule_id": "button-name",
+    "impact": "critical",
+    "wcag": [
+      {
+        "id": "4.1.2",
+        "name": "Name, Role, Value",
+        "level": "A",
+        "introduced_in": "2.0"
+      }
+    ],
+    "help": "Buttons must have discernible text",
+    "failure_summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty",
+    "html": "<button type=\"submit\" class=\"btn-primary\"><svg class=\"spinner\"></svg></button>",
+    "selector": "form > button",
+    "en_301_549": [
+      "9.1.1.1"
+    ],
+    "page_url": "https://p.vercel.app/",
+    "page_path": "/",
+    "help_url": "https://dequeuniversity.com/rules/axe/4.13/x"
+  },
+  "expected": {
+    "file": "src/checkout/SubmitButton.tsx",
+    "line_contains": "<button type=\"submit\"",
+    "disposition_in": [
+      "suggestion",
+      "annotation"
+    ],
+    "patch_contains": "aria-label"
+  },
+  "notes": "Text literal is empty; must locate by tag + type + class token."
+}

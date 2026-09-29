@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Secrets — never commit these
+.env
+.env.local
+*.pem
+*.key
+
+# Caches and local tooling
+.cache/
+.playwright/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+pytest.xml
+
+# Node / Next
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

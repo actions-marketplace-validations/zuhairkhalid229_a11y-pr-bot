@@ -1,0 +1,92 @@
+rules_version = '2';
+
+// Deploy:  firebase deploy --only firestore:rules
+//
+// Design notes, because the non-obvious parts are non-obvious:
+//
+// 1. Rules cannot call the GitHub API, so they cannot know that Firebase user
+//    X administers GitHub installation Y. That fact is materialised by the api
+//    service at POST /api/link (which asks GitHub with the user's own OAuth
+//    token) into installations/{iid}/members/{uid}. Rules then need one
+//    exists() -- and Firestore caches document lookups for the duration of a
+//    single request evaluation, so a query filtered to one installation pays
+//    for one membership lookup, not one per returned document.
+//
+// 2. Clients are read-only everywhere. The Vercel bypass token is encrypted
+//    with APP_ENCRYPTION_KEY, which lives in Secret Manager and must never
+//    reach a browser, so that write goes through the api service using the
+//    Admin SDK. There is no client write path to grant.
+//
+// 3. installation_id is denormalised onto scans/{id}/findings/{fp} so a
+//    findings query does not need a get() on the parent scan.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(installationId) {
+      return signedIn()
+        && installationId != null
+        && exists(/databases/$(database)/documents/installations/$(string(installationId))/members/$(request.auth.uid));
+    }
+
+    // --- what the dashboard reads -------------------------------------------
+
+    match /installations/{iid} {
+      allow get, list: if isMember(iid);
+      allow write: if false;
+
+      // The user's own membership marker. Readable so the dashboard can
+      // enumerate "my installations" with a collection-group query:
+      //   collectionGroup('members').where('uid','==',uid)
+      match /members/{uid} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow write: if false;   // /api/link only
+      }
+
+      // Per-repo config. vercel_bypass_secret is a Fernet ciphertext; it is
+      // returned to the client only as the boolean has_bypass_secret, which
+      // the api computes -- so reads here are scoped to metadata the dashboard
+      // needs and the ciphertext is never useful without the key anyway.
+      match /repos/{rid} {
+        allow get, list: if isMember(iid);
+        allow write: if false;   // POST /api/installations/{iid}/repos/{rid}/bypass
+      }
+    }
+
+    // Quota counters: usage/{installationId}_{YYYYMM}
+    match /usage/{usageId} {
+      allow get, list: if signedIn()
+        && usageId.split('_')[0].size() > 0
+        && isMember(usageId.split('_')[0]);
+      allow write: if false;     // worker only
+    }
+
+    // Scan history. Every dashboard query MUST filter on installation_id;
+    // an unfiltered list is rejected because the rule cannot be satisfied
+    // for documents the caller does not own.
+    match /scans/{scanId} {
+      allow get, list: if isMember(resource.data.installation_id);
+      allow write: if false;
+
+      match /findings/{fingerprint} {
+        allow get, list: if isMember(resource.data.installation_id);
+        allow write: if false;
+      }
+    }
+
+    // --- what the dashboard must never see ---------------------------------
+
+    // Webhook idempotency records and per-PR posting history carry no user
+    // value and the latter holds comment bodies; both are worker-internal.
+    match /deliveries/{id}  { allow read, write: if false; }
+    match /prs/{key}        { allow read, write: if false;
+      match /posted/{fp}    { allow read, write: if false; } }
+
+    // Default deny for anything added later without a considered rule.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

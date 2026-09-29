@@ -1,0 +1,37 @@
+{
+  "diff": {
+    "src/Newsletter.tsx": "all"
+  },
+  "finding": {
+    "rule_id": "label",
+    "impact": "critical",
+    "wcag": [
+      {
+        "id": "4.1.2",
+        "name": "Name, Role, Value",
+        "level": "A",
+        "introduced_in": "2.0"
+      }
+    ],
+    "help": "Form elements must have labels",
+    "failure_summary": "Fix any of the following:\n  Form element does not have an implicit (wrapped) <label>\n  aria-label attribute does not exist or is empty",
+    "html": "<input type=\"email\" name=\"email\" placeholder=\"you@example.com\" required=\"\">",
+    "selector": "form.newsletter > input",
+    "en_301_549": [
+      "9.1.1.1"
+    ],
+    "page_url": "https://p.vercel.app/",
+    "page_path": "/",
+    "help_url": "https://dequeuniversity.com/rules/axe/4.13/x"
+  },
+  "expected": {
+    "file": "src/Newsletter.tsx",
+    "line_contains": "name=\"email\"",
+    "disposition_in": [
+      "suggestion",
+      "annotation"
+    ],
+    "requires_human_content": false
+  },
+  "notes": "name=email + type=email: the label text is knowable. Should not be flagged for a human."
+}
