@@ -1,4 +1,4 @@
--r requirements.txt
-pytest==8.3.4
-pytest-asyncio==0.25.0
-respx==0.22.0
+﻿-r requirements.txt
+pytest==9.0.3
+pytest-asyncio==1.4.0
+respx==0.23.1
