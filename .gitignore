@@ -20,6 +20,11 @@ venv/
 htmlcov/
 pytest.xml
 
+# Project-local deploy CLIs. package.json pins the versions and is committed;
+# the installed trees (hundreds of MB) are not.
+tools/node_modules/
+tools/google-cloud-sdk/
+
 # Node / Next
 node_modules/
 .next/

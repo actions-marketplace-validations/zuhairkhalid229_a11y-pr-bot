@@ -1,0 +1,9 @@
+{
+  "name": "a11y-pr-bot-deploy-tools",
+  "private": true,
+  "description": "Deploy CLIs pinned and installed project-locally, so nothing lands on the system drive. Invoke via node_modules/.bin/.",
+  "dependencies": {
+    "firebase-tools": "14.24.0",
+    "vercel": "48.10.0"
+  }
+}
