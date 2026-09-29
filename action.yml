@@ -1,0 +1,123 @@
+name: "Accessibility scan (WCAG 2.2 / EN 301 549)"
+description: "Scan a deployed URL with axe-core and report WCAG 2.2 AA violations on the pull request."
+author: "Zuhair Khalid"
+
+branding:
+  icon: eye
+  color: purple
+
+inputs:
+  url:
+    description: "URL to scan. Usually your preview deployment."
+    required: true
+
+  fail-on:
+    description: >
+      Fail the job when a violation of this impact or higher is found:
+      critical, serious, moderate, minor, or never. Defaults to `never` so
+      adding this action cannot break an existing pipeline on day one --
+      set it to `serious` once you have cleared the backlog.
+    required: false
+    default: "never"
+
+  wcag:
+    description: "Comma-separated axe tags defining the conformance target."
+    required: false
+    default: "wcag2a,wcag2aa,wcag21a,wcag21aa,wcag22aa"
+
+  wait-for:
+    description: "Seconds to wait for the URL to start answering. Preview deployments are often still booting."
+    required: false
+    default: "60"
+
+  viewport:
+    description: "Viewport as WIDTHxHEIGHT. Affects reflow and contrast results."
+    required: false
+    default: "1280x800"
+
+  summary:
+    description: "Write a report to the job summary."
+    required: false
+    default: "true"
+
+  comment:
+    description: >
+      Post (and update in place) a comment on the pull request. Requires
+      `permissions: pull-requests: write` and a pull_request event.
+    required: false
+    default: "false"
+
+  json-file:
+    description: "Where to write the machine-readable results."
+    required: false
+    default: "a11y-results.json"
+
+  github-token:
+    description: "Token used to post the PR comment."
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  violations:
+    description: "Total number of violations found."
+    value: ${{ steps.scan.outputs.violations }}
+  critical:
+    description: "Number of critical-impact violations."
+    value: ${{ steps.scan.outputs.critical }}
+  serious:
+    description: "Number of serious-impact violations."
+    value: ${{ steps.scan.outputs.serious }}
+  moderate:
+    description: "Number of moderate-impact violations."
+    value: ${{ steps.scan.outputs.moderate }}
+  minor:
+    description: "Number of minor-impact violations."
+    value: ${{ steps.scan.outputs.minor }}
+  needs-review:
+    description: "Elements axe could not decide automatically, which need a human."
+    value: ${{ steps.scan.outputs.needs-review }}
+  json-file:
+    description: "Path to the JSON results file."
+    value: ${{ steps.scan.outputs.json-file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+
+    # Keyed on the action's own pinned requirements, so a consumer repo's
+    # cache is not invalidated by their own dependency changes.
+    - name: Restore dependency cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.cache/ms-playwright
+        key: a11y-scan-${{ runner.os }}-${{ hashFiles('${{ github.action_path }}/action/requirements.txt') }}
+
+    - name: Install
+      shell: bash
+      run: |
+        python -m pip install --quiet --disable-pip-version-check \
+          -r "$GITHUB_ACTION_PATH/action/requirements.txt"
+        python -m playwright install --with-deps chromium
+
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        INPUT_URL: ${{ inputs.url }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_WCAG: ${{ inputs.wcag }}
+        INPUT_WAIT_FOR: ${{ inputs.wait-for }}
+        INPUT_VIEWPORT: ${{ inputs.viewport }}
+        INPUT_SUMMARY: ${{ inputs.summary }}
+        INPUT_COMMENT: ${{ inputs.comment }}
+        INPUT_JSON_FILE: ${{ inputs.json-file }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PYTHONPATH: ${{ github.action_path }}
+      run: python "$GITHUB_ACTION_PATH/action/scan.py"

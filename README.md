@@ -20,6 +20,85 @@ and gives you the file, the line, and the patch.
 
 ---
 
+## Two ways to use it
+
+### 1. The GitHub Action — free, no account
+
+Scans any URL and reports on the run. No sign-up, no hosted service, nothing
+leaves your runner.
+
+```yaml
+- uses: zuhairkhalid229/a11y-pr-bot@v1
+  with:
+    url: ${{ steps.deploy.outputs.preview-url }}
+```
+
+A fuller example, gating the build and commenting on the pull request:
+
+```yaml
+name: Accessibility
+on: pull_request
+
+permissions:
+  contents: read
+  pull-requests: write      # only needed for `comment: true`
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - id: deploy
+        run: echo "url=https://my-preview.vercel.app" >> "$GITHUB_OUTPUT"
+
+      - uses: zuhairkhalid229/a11y-pr-bot@v1
+        id: a11y
+        with:
+          url: ${{ steps.deploy.outputs.url }}
+          fail-on: serious      # default is `never`
+          comment: true
+
+      - run: echo "found ${{ steps.a11y.outputs.violations }} violations"
+```
+
+| Input | Default | |
+|---|---|---|
+| `url` | — | **Required.** Usually your preview deployment. |
+| `fail-on` | `never` | `critical` · `serious` · `moderate` · `minor` · `never`. Fails on that impact **or higher**. |
+| `wcag` | WCAG 2.2 A + AA | Comma-separated axe tags. |
+| `wait-for` | `60` | Seconds to wait for the URL to answer. Previews are often still booting. |
+| `viewport` | `1280x800` | Affects reflow and contrast results. |
+| `summary` | `true` | Write a report to the job summary. |
+| `comment` | `false` | Post one comment per PR, edited in place. Needs `pull-requests: write`. |
+| `json-file` | `a11y-results.json` | Machine-readable results. |
+
+Outputs: `violations`, `critical`, `serious`, `moderate`, `minor`,
+`needs-review`, `json-file`.
+
+**`fail-on` defaults to `never` on purpose.** A tool that breaks an existing
+pipeline the day it is added gets removed the same day. Start by watching the
+job summary, then turn the gate on once the backlog is clear.
+
+### 2. The GitHub App — fixes, not just findings
+
+The action tells you an element on the rendered page is wrong. The app traces it
+back to the JSX that produced it and posts a patch you can commit in one click,
+deduped across pushes. That is the part that needs your diff and a model pass.
+
+See [INSTALL.md](INSTALL.md).
+
+| | Action | App |
+|---|---|---|
+| axe-core scan of a preview | ✅ | ✅ |
+| WCAG 2.2 + EN 301 549 mapping | ✅ | ✅ |
+| Job summary / PR comment | ✅ | ✅ |
+| Traced back to the JSX line | — | ✅ |
+| One-click `suggestion` fix | — | ✅ |
+| Fixed-issue tracking across pushes | — | ✅ |
+| Conformance report export | — | ✅ |
+
+---
+
 ## What it looks like
 
 A single review per push, not one comment per finding:
@@ -144,6 +223,17 @@ curl -s localhost:8081/tasks/scan -H 'content-type: application/json' \
   -d '{"scan_id":"local","url":"https://example.com"}' | python -m json.tool
 ```
 
+### The action
+
+```bash
+python -m http.server 8000 --directory tests/worker/fixtures &
+INPUT_URL=http://localhost:8000/inaccessible.html INPUT_FAIL_ON=never   python action/scan.py
+```
+
+`.github/workflows/action-selftest.yml` runs this on every change to the action:
+it asserts the broken fixture is caught, the clean one is not, and that
+`fail-on` actually fails a job.
+
 ### Smoke test against a real installation
 
 ```bash
@@ -173,6 +263,7 @@ repos: free is 1 repo and 50 scans a month.
 ## Project layout
 
 ```
+action.yml the GitHub Action (composite); entry point in action/
 app/       webhook service + dashboard API
   webhooks/    HMAC verification, PR and deployment handlers
   store/       Firestore access, scan state machine, quota

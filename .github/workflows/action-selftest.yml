@@ -1,0 +1,122 @@
+name: Action self-test
+
+# Proves the composite action actually works, on every change to it. It is also
+# the live usage example -- if this file drifts from the README, the README is
+# wrong.
+on:
+  push:
+    branches: [main]
+    paths: ["action.yml", "action/**", "worker/**", ".github/workflows/action-selftest.yml"]
+  pull_request:
+    paths: ["action.yml", "action/**", "worker/**", ".github/workflows/action-selftest.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finds-violations:
+    name: Detects a broken page
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Serve the fixtures
+        run: |
+          python -m http.server 8000 --directory tests/worker/fixtures &
+          for _ in $(seq 1 30); do
+            curl -sf http://localhost:8000/inaccessible.html >/dev/null && break
+            sleep 1
+          done
+
+      - name: Scan the deliberately broken fixture
+        id: scan
+        uses: ./
+        with:
+          url: http://localhost:8000/inaccessible.html
+          fail-on: never
+          json-file: broken.json
+
+      - name: Assert it found what it should
+        run: |
+          python - <<'PY'
+          import json, sys
+          violations = int("${{ steps.scan.outputs.violations }}")
+          rules = {f["rule_id"] for f in json.load(open("broken.json"))["findings"]}
+          expected = {"html-has-lang", "document-title", "image-alt",
+                      "label", "button-name", "link-name", "color-contrast"}
+          missing = expected - rules
+          print(f"violations={violations} rules={sorted(rules)}")
+          if violations < 7 or missing:
+              sys.exit(f"expected >=7 violations covering {sorted(expected)}; missing {sorted(missing)}")
+          # The outputs must agree with the JSON, or downstream steps lie.
+          assert int("${{ steps.scan.outputs.critical }}") > 0, "critical output not set"
+          print("ok")
+          PY
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: selftest-results
+          path: broken.json
+          if-no-files-found: warn
+
+  passes-a-clean-page:
+    name: Stays quiet on a clean page
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Serve the fixtures
+        run: |
+          python -m http.server 8000 --directory tests/worker/fixtures &
+          for _ in $(seq 1 30); do
+            curl -sf http://localhost:8000/accessible.html >/dev/null && break
+            sleep 1
+          done
+
+      # fail-on: critical proves the gate does not fire on a clean page.
+      - name: Scan the clean fixture
+        id: scan
+        uses: ./
+        with:
+          url: http://localhost:8000/accessible.html
+          fail-on: critical
+
+      - name: Assert it found nothing
+        run: |
+          test "${{ steps.scan.outputs.violations }}" = "0" \
+            || { echo "expected 0 violations, got ${{ steps.scan.outputs.violations }}"; exit 1; }
+
+  fails-when-told-to:
+    name: fail-on actually fails
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Serve the fixtures
+        run: |
+          python -m http.server 8000 --directory tests/worker/fixtures &
+          for _ in $(seq 1 30); do
+            curl -sf http://localhost:8000/inaccessible.html >/dev/null && break
+            sleep 1
+          done
+
+      # A gate that never fires is worse than no gate, so assert the failure.
+      - name: Scan with a gate that must trip
+        id: scan
+        continue-on-error: true
+        uses: ./
+        with:
+          url: http://localhost:8000/inaccessible.html
+          fail-on: critical
+          summary: "false"
+
+      - name: Assert the step failed
+        run: |
+          test "${{ steps.scan.outcome }}" = "failure" \
+            || { echo "fail-on: critical did not fail the step"; exit 1; }
+          echo "gate fired correctly"
