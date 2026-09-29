@@ -24,6 +24,10 @@ pytest.xml
 # the installed trees (hundreds of MB) are not.
 tools/node_modules/
 tools/google-cloud-sdk/
+# The lockfile pulls the whole firebase-tools + vercel transitive tree into
+# Dependabot's scan -- 41 alerts for CLIs that are never deployed and never
+# imported by the product. package.json pins the two versions that matter.
+tools/package-lock.json
 
 # Node / Next
 node_modules/
