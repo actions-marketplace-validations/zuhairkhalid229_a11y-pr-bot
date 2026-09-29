@@ -1,19 +1,51 @@
 version: 2
+
+# Deliberately quiet. The first run of a chattier config opened ten pull
+# requests in one minute, which is worse than no automation: nobody reads the
+# eleventh.
+#
+# One grouped pull request per ecosystem per month. Major bumps are excluded --
+# they are breaking by definition and need a human reading a changelog, not a
+# bot opening a PR.
 updates:
   - package-ecosystem: pip
     directory: "/"
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "chore(deps)"
     groups:
-      python-minor:
+      python:
+        patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: npm
     directory: "/web"
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "chore(deps)"
     groups:
-      web-minor:
+      web:
+        patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      # next and react majors in particular need a real upgrade pass.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: "/"
-    schedule: { interval: monthly }
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns: ["*"]
