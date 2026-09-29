@@ -160,10 +160,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         try:
             Handler.result = convert(code)
-            self._send(200, DONE.format(
-                title="App created",
-                body=f"<strong>{Handler.result['name']}</strong> is registered and the "
-                     "credentials were written to <code>.env</code>. You can close this tab."))
+            self._send(
+                200,
+                DONE.format(
+                    title="App created",
+                    body=f"<strong>{Handler.result['name']}</strong> is registered and the "
+                    "credentials were written to <code>.env</code>. You can close this tab.",
+                ),
+            )
         except Exception as exc:
             Handler.error = f"{type(exc).__name__}: {exc}"
             self._send(500, DONE.format(title="Conversion failed", body=Handler.error))
@@ -228,7 +232,9 @@ def free_port(preferred: int) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--name", default="a11y-pr-bot", help="App name; must be globally unique on GitHub")
     parser.add_argument("--domain", required=True, help="Dashboard domain, e.g. a11y.example.com")
     parser.add_argument("--api-url", required=True, help="Cloud Run URL of the api service")
