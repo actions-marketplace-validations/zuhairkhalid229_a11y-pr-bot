@@ -3,6 +3,21 @@
 Notable changes to this project. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [v1.0.1] - 2026-10-03
+
+### Changed
+- Action: `actions/setup-python` 6 -> 7 and `actions/cache` 4 -> 6 inside
+  `action.yml`. This changes what consumers of `@v1` execute, so it is a
+  release rather than an internal CI bump. The three self-test jobs run the
+  action end to end against both fixtures, so the new versions are exercised,
+  not merely parsed.
+- CI: `actions/checkout` 5 -> 7.
+
+### Note for consumers
+`actions/cache@v6` and `setup-python@v7` need a reasonably current runner. On
+GitHub-hosted runners this is a non-event; on an old self-hosted runner, pin
+`@v1.0.0` instead.
+
 ## [Unreleased]
 
 First public release candidate. Not yet deployed to production.

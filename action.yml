@@ -84,7 +84,7 @@ runs:
   using: composite
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: "3.12"
 
@@ -92,7 +92,7 @@ runs:
     # cache is not invalidated by their own dependency changes.
     - name: Restore dependency cache
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: |
           ~/.cache/pip
