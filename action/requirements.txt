@@ -2,6 +2,6 @@
 # requirements so the action installs in seconds and has no cloud dependencies.
 # playwright must match the version the scanner was tested against.
 playwright==1.62.0
-pydantic==2.13.5
-pydantic-settings==2.15.0
+pydantic==2.14.1
+pydantic-settings==2.16.2
 structlog==24.4.0
